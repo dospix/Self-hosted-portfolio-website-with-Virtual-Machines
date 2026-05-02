@@ -1,0 +1,28 @@
+upstream backend {
+    server 192.168.100.20:5000;
+}
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    # Serve React frontend
+    location / {
+        root /home/vboxuser/app;
+        try_files $uri $uri/ @app;
+    }
+
+    # Proxy API requests to Flask backend
+    location @app {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+}

@@ -1,4 +1,3 @@
-from dotenv import dotenv_values
 from flask import Flask, request
 from flask.helpers import send_from_directory
 from flask_cors import CORS, cross_origin
@@ -17,9 +16,9 @@ import boto3
 import uuid
 import time
 import json
+import os
 from decimal import Decimal
-
-dotenv_dict = dotenv_values(".env")
+from dotenv import load_dotenv
 
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
@@ -27,18 +26,12 @@ mimetypes.add_type("text/css", ".css")
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="")
 CORS(app)
 
-DEVELOPMENT_MODE = True if dotenv_dict["DEVELOPMENT_MODE"] == "True" else False
+load_dotenv()
 
-if not DEVELOPMENT_MODE:
-    # pythonanywhere MySQL setup
-    SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{dotenv_dict['USERNAME']}:{dotenv_dict['PASSWORD']}@{dotenv_dict['HOSTNAME']}/{dotenv_dict['DATABASENAME']}"
-    app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
-    app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-else:
-    # local database setup
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE") == "True"
+
+database_url = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
 db = SQLAlchemy(app)
 
@@ -104,8 +97,8 @@ def get_food_item_info():
 
     # # Create a Boto3 session with the specified credentials and region
     session = boto3.Session(
-        aws_access_key_id=dotenv_dict["AWS_ACCESS_KEY_ID"],
-        aws_secret_access_key=dotenv_dict["AWS_SECRET_ACCESS_KEY"],
+        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
         region_name="us-east-1"
     )
 
